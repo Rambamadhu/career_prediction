@@ -6,12 +6,7 @@ import pickle
 # Load the trained model
 model = pickle.load(open('CAREER.pkl', 'rb'))
 
-# App title
-st.title("Career Recommendation System")
-
-# Sidebar for input features
-st.sidebar.header("Input Features")
-
+# Function to collect user input features
 def user_input_features():
     Logical_quotient_rating = st.sidebar.slider("Logical Quotient Rating", 1, 10, 5)
     coding_skills_rating = st.sidebar.slider("Coding Skills Rating", 1, 10, 5)
@@ -25,8 +20,8 @@ def user_input_features():
     reading_skills = st.sidebar.selectbox("Reading and Writing Skills", ["poor", "medium", "excellent"])
     memory_capability = st.sidebar.selectbox("Memory Capability Score", ["poor", "medium", "excellent"])
 
-    # Additional encodings
-    feature_data = {
+    # Feature dictionary matching model's expected input
+    features = {
         'Logical quotient rating': Logical_quotient_rating,
         'coding skills rating': coding_skills_rating,
         'hackathons': hackathons,
@@ -37,22 +32,45 @@ def user_input_features():
         'worked in teams ever?': 1 if worked_in_teams == "yes" else 0,
         'Introvert': 1 if introvert == "yes" else 0,
         'reading and writing skills': {"poor": 0, "medium": 1, "excellent": 2}[reading_skills],
-        'memory capability score': {"poor": 0, "medium": 1, "excellent": 2}[memory_capability]
+        'memory capability score': {"poor": 0, "medium": 1, "excellent": 2}[memory_capability],
+        'B_hard worker': 0,  # Placeholder for binary-encoded features
+        'B_smart worker': 0,
+        'A_Management': 0,
+        'A_Technical': 0,
+        'Interested subjects_code': 0,
+        'Interested Type of Books_code': 0,
+        'certifications_code': 0,
+        'workshops_code': 0,
+        'Type of company want to settle in?_code': 0,
+        'interested career area _code': 0
     }
 
-    return pd.DataFrame([feature_data])
+    return pd.DataFrame([features])
 
-# Get user inputs
+# Streamlit UI
+st.title("Career Recommendation System")
+st.write("""
+### Predict the best career path based on your skills and preferences.
+""")
+
+# Collect user input features
 input_df = user_input_features()
 
-# Display input features
-st.subheader("User Input Features")
+# Display user input features
+st.subheader("Your Input Features")
 st.write(input_df)
 
-# Make predictions
-if st.button("Predict Career Path"):
-    prediction = model.predict(input_df)
-    st.subheader("Predicted Career Path")
-    st.write(prediction[0])
+# Make prediction
+if st.button("Predict"):
+    try:
+        prediction = model.predict(input_df)
+        prediction_proba = model.predict_proba(input_df)
 
+        st.subheader("Prediction")
+        st.write(f"Suggested Job Role: **{prediction[0]}**")
 
+        st.subheader("Prediction Probabilities")
+        st.write("Probabilities for all possible job roles:")
+        st.write(prediction_proba)
+    except ValueError as e:
+        st.error(f"Error: {e}")
